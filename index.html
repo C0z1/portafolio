@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Felix Yael Tavera Ramírez — AI & Software Engineer</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
 <style>
 :root{
-  --bg:#030812;--bg2:#060f1e;--bg3:#0b1828;
-  --fg:#dce8f4;--fg2:#8ba8c4;--muted:#3d5872;
-  --border:#0e2038;--border2:#162c48;
-  --amber:#f0a400;--amber2:#c47e00;--amber-dim:#f0a40020;
-  --cyan:#00bedd;--cyan-dim:#00bedd18;--green:#00e09a;--violet:#7c55f0;
+  --bg:#020810;--bg2:#050d1a;--bg3:#091525;
+  --fg:#cce4f7;--fg2:#7aa8cc;--muted:#2d5070;
+  --border:#0a1c30;--border2:#102840;
+  --amber:#38b6ff;--amber2:#1a8fd1;--amber-dim:#38b6ff20;
+  --cyan:#7dd3fc;--cyan-dim:#7dd3fc18;--green:#38b6ff;--violet:#1e90d4;
   --mono:'JetBrains Mono',ui-monospace,monospace;
   --disp:'Space Grotesk',system-ui,sans-serif;
 }
@@ -24,12 +24,12 @@ body{background:var(--bg);color:var(--fg);font-family:var(--disp);overflow-x:hid
 /* NAV */
 nav{position:fixed;top:0;left:0;right:0;z-index:100;height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 48px;background:rgba(3,8,18,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
 .logo{font-family:var(--mono);font-size:12px;letter-spacing:.15em;color:var(--amber);display:flex;align-items:center;gap:8px}
-.logo-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s ease-in-out infinite}
+.logo-dot{width:6px;height:6px;border-radius:50%;background:#38b6ff;animation:pulse 2s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
 .nav-links{display:flex;gap:28px;list-style:none}
 .nav-links a{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--muted);text-decoration:none;transition:color .2s}
 .nav-links a:hover,.nav-links a.active{color:var(--cyan)}
-.nav-status{font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--green)}
+.nav-status{font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:#38b6ff}
 .burger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:4px}
 .burger span{display:block;width:20px;height:1px;background:var(--muted);transition:.2s}
 .mnav{display:none;position:fixed;top:54px;left:0;right:0;background:rgba(3,8,18,.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);z-index:99;flex-direction:column;padding:16px 0}
@@ -38,42 +38,41 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;height:54px;display:flex;ali
 .mnav a:hover{color:var(--cyan)}
 
 /* HERO */
-#hero{position:relative;width:100%;height:100vh;min-height:640px;cursor:none}
-#hero-canvas{display:block;width:100%!important;height:100%!important}
-#cur{position:absolute;width:4px;height:4px;border-radius:50%;background:var(--amber);pointer-events:none;transform:translate(-50%,-50%);z-index:30;box-shadow:0 0 10px var(--amber)}
-#cur-ring{position:absolute;width:28px;height:28px;border-radius:50%;border:1px solid #f0a40040;pointer-events:none;transform:translate(-50%,-50%);z-index:29;transition:left .1s ease-out,top .1s ease-out}
-.scanlines{position:absolute;inset:0;pointer-events:none;z-index:5;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.05) 2px,rgba(0,0,0,.05) 4px)}
-.vignette{position:absolute;inset:0;pointer-events:none;z-index:4;background:radial-gradient(ellipse at 65% 50%,transparent 30%,rgba(3,8,18,.82) 100%)}
-.hud{position:absolute;width:18px;height:18px;pointer-events:none;z-index:15}
-.hud.tl{top:68px;left:16px;border-top:1px solid #f0a40040;border-left:1px solid #f0a40040}
-.hud.tr{top:68px;right:16px;border-top:1px solid #f0a40040;border-right:1px solid #f0a40040}
-.hud.bl{bottom:16px;left:16px;border-bottom:1px solid #f0a40040;border-left:1px solid #f0a40040}
-.hud.br{bottom:16px;right:16px;border-bottom:1px solid #f0a40040;border-right:1px solid #f0a40040}
-.telem{position:absolute;top:62px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:9px;color:#f0a40040;letter-spacing:.2em;pointer-events:none;z-index:15;white-space:nowrap}
-.telem span{color:#f0a40080}
-.data-r{position:absolute;right:22px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:8px;color:#f0a40030;letter-spacing:.06em;pointer-events:none;z-index:15;text-align:right;line-height:2.6}
-.data-r .v{color:#f0a40070}
-#rkthud{position:absolute;bottom:54px;left:20px;font-family:var(--mono);font-size:8px;color:#00bedd40;letter-spacing:.06em;pointer-events:none;z-index:15;line-height:2.2}
-#rkthud .rv{color:#00bedd90}
-#rkthud .rt{color:#00beddaa;letter-spacing:.18em;margin-bottom:2px}
-#orbit{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:9px;color:#00bedd40;letter-spacing:.16em;pointer-events:none;z-index:15;white-space:nowrap}
-.ldot{color:var(--green);animation:blink 1.2s step-end infinite}
-@keyframes blink{50%{opacity:0}}
+#hero{position:relative;width:100%;height:100vh;min-height:640px;display:flex;align-items:center;overflow:hidden;cursor:default}
+.vignette{position:absolute;inset:0;pointer-events:none;z-index:4;background:radial-gradient(ellipse at 60% 50%,transparent 20%,rgba(2,8,16,.85) 100%)}
 .hero-ov{position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;justify-content:center;padding:0 52px;z-index:10;pointer-events:none}
-.eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.3em;color:var(--amber);opacity:.7;margin-bottom:20px;display:flex;align-items:center;gap:12px}
-.eyebrow::before{content:'';flex:0 0 24px;height:1px;background:var(--amber);opacity:.5}
+.eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.22em;color:var(--amber);opacity:.7;margin-bottom:20px}
 .hname{font-family:var(--disp);font-size:clamp(44px,6vw,76px);font-weight:700;line-height:.95;color:#fff;letter-spacing:-.03em;margin-bottom:10px}
 .hname .sur{display:block;font-weight:300;color:var(--fg2);opacity:.75}
 .hrole{font-family:var(--mono);font-size:12px;color:var(--cyan);letter-spacing:.18em;margin-bottom:22px;min-height:20px}
 .tcur{display:inline-block;width:2px;height:1em;background:var(--cyan);margin-left:2px;vertical-align:middle;animation:blink 1s step-end infinite}
-.hbio{font-size:14px;font-weight:300;color:var(--fg2);line-height:1.85;max-width:380px;margin-bottom:38px;opacity:.75}
+@keyframes blink{50%{opacity:0}}
+.hbio{font-size:14px;font-weight:300;color:var(--fg2);line-height:1.85;max-width:360px;margin-bottom:38px;opacity:.75}
 .hbtns{display:flex;gap:14px;pointer-events:all}
-.btn-p{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--bg);background:var(--amber);border:none;padding:13px 28px;border-radius:2px;cursor:pointer;position:relative;overflow:hidden;transition:box-shadow .25s,background .2s}
-.btn-p::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);transform:translateX(-100%);transition:transform .5s}
-.btn-p:hover::after{transform:translateX(100%)}
-.btn-p:hover{box-shadow:0 0 28px #f0a40055;background:#ffb822}
-.btn-g{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--cyan);background:transparent;border:1px solid #00bedd28;padding:12px 28px;border-radius:2px;cursor:pointer;transition:border-color .2s}
-.btn-g:hover{border-color:#00bedd55}
+.btn-p{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:#fff;background:linear-gradient(135deg,#1a6fa8,#38b6ff);border:none;padding:13px 28px;border-radius:2px;cursor:pointer;transition:box-shadow .25s,opacity .2s}
+.btn-p:hover{box-shadow:0 0 28px #38b6ff55;opacity:.9}
+.btn-g{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--cyan);background:transparent;border:1px solid #38b6ff28;padding:12px 28px;border-radius:2px;cursor:pointer;transition:border-color .2s}
+.btn-g:hover{border-color:#38b6ff55}
+
+/* HERO BG */
+#hero{background:#020810}
+#hero::before{content:'';position:absolute;inset:0;z-index:1;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%,#38b6ff55 0%,transparent 100%),
+    radial-gradient(1px 1px at 34% 72%,#7dd3fc44 0%,transparent 100%),
+    radial-gradient(1px 1px at 56% 9%,#38b6ff33 0%,transparent 100%),
+    radial-gradient(1px 1px at 78% 43%,#7dd3fc55 0%,transparent 100%),
+    radial-gradient(1px 1px at 8%  61%,#38b6ff44 0%,transparent 100%),
+    radial-gradient(1px 1px at 91% 27%,#7dd3fc33 0%,transparent 100%),
+    radial-gradient(1px 1px at 45% 88%,#38b6ff22 0%,transparent 100%),
+    radial-gradient(1px 1px at 67% 55%,#7dd3fc44 0%,transparent 100%),
+    radial-gradient(1px 1px at 23% 39%,#38b6ff33 0%,transparent 100%),
+    radial-gradient(1px 1px at 82% 80%,#7dd3fc22 0%,transparent 100%);
+}
+
+/* ASCII BLACK HOLE */
+#ascii-bh{position:absolute;right:0;top:0;bottom:0;width:55%;display:flex;align-items:center;justify-content:center;z-index:2;pointer-events:none;overflow:hidden}
+#ascii-canvas{font-family:var(--mono);font-size:11px;line-height:1.35;white-space:pre;color:#38b6ff;text-shadow:0 0 8px #38b6ff66;user-select:none;letter-spacing:.08em}
 
 /* SHARED */
 section{padding:88px 0;position:relative}
@@ -106,7 +105,7 @@ section{padding:88px 0;position:relative}
 .prow{display:grid;grid-template-columns:160px 1fr 36px;align-items:center;gap:14px}
 .plbl{font-family:var(--mono);font-size:10px;color:var(--fg2)}
 .pbar{height:2px;background:var(--border);border-radius:1px;overflow:hidden}
-.pfill{height:100%;width:0;border-radius:1px;background:linear-gradient(90deg,var(--amber2),var(--amber));transition:width 1.2s cubic-bezier(.16,1,.3,1)}
+.pfill{height:100%;width:0;border-radius:1px;background:linear-gradient(90deg,#1a6fa8,#38b6ff);transition:width 1.2s cubic-bezier(.16,1,.3,1)}
 .ppct{font-family:var(--mono);font-size:9px;color:var(--muted);text-align:right}
 
 /* EXPERIENCE */
@@ -158,7 +157,7 @@ section{padding:88px 0;position:relative}
 .drow{display:grid;grid-template-columns:148px 1fr 36px;align-items:center;gap:14px}
 .dlbl{font-family:var(--mono);font-size:10px;color:var(--fg2)}
 .dbar{height:2px;background:var(--border);border-radius:1px;overflow:hidden}
-.dfill{height:100%;width:0;border-radius:1px;background:linear-gradient(90deg,var(--amber2),var(--amber));transition:width 1.2s cubic-bezier(.16,1,.3,1)}
+.dfill{height:100%;width:0;border-radius:1px;background:linear-gradient(90deg,#1a6fa8,#38b6ff);transition:width 1.2s cubic-bezier(.16,1,.3,1)}
 .dpct{font-family:var(--mono);font-size:9px;color:var(--muted);text-align:right}
 
 /* CONTACT */
@@ -234,24 +233,18 @@ footer{border-top:1px solid var(--border);padding:20px 52px;display:flex;justify
 
 <!-- HERO -->
 <section id="hero">
-  <canvas id="hero-canvas"></canvas>
-  <div id="cur"></div><div id="cur-ring"></div>
-  <div class="scanlines"></div><div class="vignette"></div>
-  <div class="hud tl"></div><div class="hud tr"></div><div class="hud bl"></div><div class="hud br"></div>
-  <div class="telem">SYS <span id="sc">0.000 / 0.000</span> · SECTOR <span>NGC-4889</span></div>
-  <div class="data-r">MASS<br><span class="v" id="dm">—</span><br>SPIN<br><span class="v" id="ds">—</span><br>TEMP<br><span class="v" id="dt">—</span><br>FLUX<br><span class="v" id="df">—</span></div>
-  <div id="rkthud"><div class="rt">▲ SONDA-7</div>ETD <span class="rv" id="re">—</span><br>VEL <span class="rv" id="rv">—</span><br>DIST <span class="rv" id="rd">—</span></div>
+  <div class="vignette"></div>
+  <div id="ascii-bh"><pre id="ascii-canvas"></pre></div>
   <div class="hero-ov">
-    <div class="eyebrow">AI · FULL STACK · MACHINE LEARNING</div>
+    <div class="eyebrow">AI · FULL STACK · ML</div>
     <div class="hname">Felix Yael<span class="sur">Tavera Ramírez</span></div>
     <div class="hrole" id="hrole"></div>
-    <div class="hbio">I connect users, data and AI models into a single system — where code doesn't just respond, it learns.</div>
+    <div class="hbio">Conecto usuarios, datos y modelos de IA en sistemas que no solo responden — aprenden.</div>
     <div class="hbtns">
-      <button class="btn-p" onclick="document.getElementById('projects').scrollIntoView({behavior:'smooth'})">VIEW PROJECTS</button>
-      <button class="btn-g" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">CONTACT</button>
+      <button class="btn-p" onclick="document.getElementById('projects').scrollIntoView({behavior:'smooth'})">VER PROYECTOS</button>
+      <button class="btn-g" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">CONTACTO</button>
     </div>
   </div>
-  <div id="orbit"><span class="ldot">●</span> LIVE · <span id="orb">CALCULATING ORBIT...</span></div>
 </section>
 
 <div class="rule"></div>
@@ -485,62 +478,95 @@ footer{border-top:1px solid var(--border);padding:20px 52px;display:flex;justify
 </footer>
 
 <script>
-/* THREE.JS */
+/* ASCII BLACK HOLE */
 (function(){
-  const canvas=document.getElementById('hero-canvas');
-  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
-  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-  const scene=new THREE.Scene();
-  const camera=new THREE.PerspectiveCamera(60,1,0.1,2000);
-  camera.position.set(0,0,120);
-  function resize(){const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
-  resize();window.addEventListener('resize',resize);
-  // Stars
-  const sg=new THREE.BufferGeometry(),sp=new Float32Array(2400*3);
-  for(let i=0;i<2400*3;i++)sp[i]=(Math.random()-.5)*1800;
-  sg.setAttribute('position',new THREE.BufferAttribute(sp,3));
-  scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0x8ba8c4,size:.6,transparent:true,opacity:.5})));
-  // Black hole
-  const bh=new THREE.Mesh(new THREE.TorusGeometry(22,2.2,32,120),new THREE.MeshBasicMaterial({color:0xf0a400,wireframe:true,opacity:.18,transparent:true}));
-  bh.rotation.x=Math.PI/2.4;bh.position.set(60,10,-60);scene.add(bh);
-  const ir=new THREE.Mesh(new THREE.TorusGeometry(14,1,16,80),new THREE.MeshBasicMaterial({color:0x00bedd,wireframe:true,opacity:.12,transparent:true}));
-  ir.rotation.x=Math.PI/2.4;ir.position.set(60,10,-60);scene.add(ir);
-  // Rocket
-  const rg=new THREE.Group();
-  rg.add(new THREE.Mesh(new THREE.CylinderGeometry(.6,.6,4,8),new THREE.MeshBasicMaterial({color:0x00bedd,wireframe:true,opacity:.7,transparent:true})));
-  const nm=new THREE.Mesh(new THREE.ConeGeometry(.6,1.6,8),new THREE.MeshBasicMaterial({color:0xf0a400,wireframe:true,opacity:.8,transparent:true}));
-  nm.position.y=2.8;rg.add(nm);rg.position.set(-80,-30,-20);rg.rotation.z=Math.PI/5;scene.add(rg);
-  // Nebula
-  const nb=new THREE.BufferGeometry(),np=new Float32Array(800*3);
-  for(let i=0;i<800;i++){const r=Math.random()*180,t=Math.random()*Math.PI*2,p=Math.random()*Math.PI;np[i*3]=r*Math.sin(p)*Math.cos(t)+60;np[i*3+1]=r*Math.sin(p)*Math.sin(t)+10;np[i*3+2]=r*Math.cos(p)-60;}
-  nb.setAttribute('position',new THREE.BufferAttribute(np,3));
-  scene.add(new THREE.Points(nb,new THREE.PointsMaterial({color:0xf0a400,size:.9,transparent:true,opacity:.07})));
-  // HUD
-  let ht=0;
-  function hud(){ht+=.008;
-    const dm=document.getElementById('dm'),ds=document.getElementById('ds'),dt=document.getElementById('dt'),df=document.getElementById('df'),sc=document.getElementById('sc'),orb=document.getElementById('orb'),re=document.getElementById('re'),rv=document.getElementById('rv'),rd=document.getElementById('rd');
-    if(dm)dm.textContent=(1.24e9+Math.sin(ht)*.4e9).toExponential(2)+'M☉';
-    if(ds)ds.textContent=(0.62+Math.sin(ht*.7)*.08).toFixed(3)+'c';
-    if(dt)dt.textContent=(2.7+Math.abs(Math.sin(ht*.5))*1.2).toFixed(1)+'K';
-    if(df)df.textContent=(38+Math.sin(ht*1.3)*12).toFixed(0)+'Jy';
-    if(sc)sc.textContent=(Math.sin(ht*.3)*180).toFixed(3)+' / '+(Math.cos(ht*.2)*90).toFixed(3);
-    const dist=(1200+Math.sin(ht*.1)*80).toFixed(1);
-    if(orb)orb.textContent='PROXIMITY '+dist+' AU';
-    if(re)re.textContent=Math.max(0,Math.floor(480-ht*10))+'s';
-    if(rv)rv.textContent=(11.2+Math.sin(ht*.4)*.8).toFixed(1)+' km/s';
-    if(rd)rd.textContent=dist+' AU';
+  const el = document.getElementById('ascii-canvas');
+  if(!el) return;
+
+  // Characters by density — sparse to dense for accretion disk glow
+  const chars = [' ','.',':','+','*','#','@'];
+  // Color layers: outer→inner
+  const colors = ['#0e3a6e','#1560a8','#1a80d4','#38b6ff','#7dd3fc','#ffffff'];
+
+  const COLS = 58, ROWS = 32;
+  let t = 0;
+
+  // Precompute grid of colored spans
+  const grid = [];
+  for(let r = 0; r < ROWS; r++){
+    const row = [];
+    for(let c = 0; c < COLS; c++){
+      row.push({ ch:' ', color:'#0e3a6e' });
+    }
+    grid.push(row);
   }
-  let mx=0,my=0;
-  document.getElementById('hero').addEventListener('mousemove',e=>{mx=(e.clientX/innerWidth-.5)*2;my=-(e.clientY/innerHeight-.5)*2;});
-  let t=0;
-  (function loop(){requestAnimationFrame(loop);t+=.008;
-    bh.rotation.z+=.003;ir.rotation.z-=.005;
-    camera.position.x+=(mx*8-camera.position.x)*.04;
-    camera.position.y+=(my*5-camera.position.y)*.04;
-    camera.lookAt(scene.position);
-    rg.position.set(-80+Math.sin(t*.6)*.5+t*.18,-30+Math.cos(t*.42)*.3+t*.08,-20);
-    hud();renderer.render(scene,camera);
-  })();
+
+  function noise(x,y,t){
+    return Math.sin(x*0.7+t*1.1)*Math.cos(y*0.5-t*0.8)+
+           Math.sin(x*0.3-y*0.4+t*0.6)*0.5+
+           Math.cos(x*1.2+y*0.9+t*0.4)*0.3;
+  }
+
+  function render(){
+    t += 0.045;
+    const cx = COLS/2, cy = ROWS/2;
+    const rx = COLS*0.42, ry = ROWS*0.38; // ellipse radii for the disk
+    const holeR = Math.min(COLS,ROWS)*0.12; // singularity radius
+
+    let out = '';
+    for(let r = 0; r < ROWS; r++){
+      for(let c = 0; c < COLS; c++){
+        const dx = (c - cx)/(rx), dy = (r - cy)/(ry);
+        const dist = Math.sqrt(dx*dx + dy*dy); // 0=center,1=ring edge
+
+        // Singularity — pure void
+        const holeDist = Math.sqrt(((c-cx)/(COLS*0.13))**2+((r-cy)/(ROWS*0.11))**2);
+        if(holeDist < 1){
+          grid[r][c] = {ch:' ', color:'#000'};
+          continue;
+        }
+
+        // Accretion disk zone  (dist 0.55 → 1.2)
+        const angle = Math.atan2(r-cy, c-cx);
+        const wave = noise(c*0.18, r*0.24, t) + Math.sin(angle*3 - t*2.5)*0.4;
+        const diskZone = dist > 0.55 && dist < 1.25;
+        const glowZone = dist >= 1.25 && dist < 1.8;
+
+        let intensity = 0;
+        if(diskZone){
+          // Intensity peaks near the ring edge (~dist 1.0) and falls off
+          const ringPeak = 1 - Math.abs(dist - 0.95)*2.5;
+          intensity = Math.max(0, ringPeak + wave * 0.35);
+          // Doppler asymmetry: left side brighter (blue-shifted simulation)
+          if(c < cx) intensity *= 1.2;
+        } else if(glowZone){
+          intensity = Math.max(0, (1 - (dist-1.25)/0.55)*0.55 + wave*0.15);
+        }
+
+        intensity = Math.min(1, Math.max(0, intensity));
+        const ci = Math.floor(intensity*(chars.length-1));
+        const ch = ci <= 0 ? ' ' : chars[ci];
+
+        // Color: map dist to color palette
+        const colorIdx = Math.min(colors.length-1, Math.floor((1-Math.min(1,Math.max(0,(dist-0.5)/0.8)))*(colors.length-1)));
+        const col = intensity < 0.08 ? '#0a1c30' : colors[colorIdx];
+
+        grid[r][c] = {ch, color: col};
+      }
+      // Build row as colored spans
+      let prev = null, seg = '';
+      for(let c = 0; c < COLS; c++){
+        const cell = grid[r][c];
+        if(prev === null){ prev = cell.color; seg = cell.ch; }
+        else if(cell.color === prev){ seg += cell.ch; }
+        else { out += `<span style="color:${prev}">${seg}</span>`; prev = cell.color; seg = cell.ch; }
+      }
+      out += `<span style="color:${prev}">${seg}</span>\n`;
+    }
+    el.innerHTML = out;
+    requestAnimationFrame(render);
+  }
+  render();
 })();
 
 /* TYPEWRITER */
@@ -555,14 +581,7 @@ footer{border-top:1px solid var(--border);padding:20px 52px;display:flex;justify
   }tick();
 })();
 
-/* CURSOR */
-(function(){
-  const cur=document.getElementById('cur'),ring=document.getElementById('cur-ring'),hero=document.getElementById('hero');
-  if(!cur||!ring||!hero)return;
-  hero.addEventListener('mousemove',e=>{const r=hero.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;cur.style.left=x+'px';cur.style.top=y+'px';setTimeout(()=>{ring.style.left=x+'px';ring.style.top=y+'px';},80);});
-  hero.addEventListener('mouseleave',()=>{cur.style.display='none';ring.style.display='none';});
-  hero.addEventListener('mouseenter',()=>{cur.style.display='';ring.style.display='';});
-})();
+
 
 /* REVEAL */
 (function(){
