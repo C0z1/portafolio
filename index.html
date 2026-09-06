@@ -70,9 +70,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;height:54px;display:flex;ali
     radial-gradient(1px 1px at 82% 80%,#7dd3fc22 0%,transparent 100%);
 }
 
-/* ASCII BLACK HOLE */
-#ascii-bh{position:absolute;right:0;top:0;bottom:0;width:55%;display:flex;align-items:center;justify-content:center;z-index:2;pointer-events:none;overflow:hidden}
-#ascii-canvas{font-family:var(--mono);font-size:11px;line-height:1.35;white-space:pre;color:#38b6ff;text-shadow:0 0 8px #38b6ff66;user-select:none;letter-spacing:.08em}
+/* GAME BLACK HOLE CANVAS */
+#bh-wrap{position:absolute;right:-2%;top:0;bottom:0;width:58%;display:flex;align-items:center;justify-content:center;z-index:2;pointer-events:none}
+#bh-canvas{display:block;filter:blur(0px)}
 
 /* SHARED */
 section{padding:88px 0;position:relative}
@@ -234,7 +234,7 @@ footer{border-top:1px solid var(--border);padding:20px 52px;display:flex;justify
 <!-- HERO -->
 <section id="hero">
   <div class="vignette"></div>
-  <div id="ascii-bh"><pre id="ascii-canvas"></pre></div>
+  <div id="bh-wrap"><canvas id="bh-canvas"></canvas></div>
   <div class="hero-ov">
     <div class="eyebrow">AI · FULL STACK · ML</div>
     <div class="hname">Felix Yael<span class="sur">Tavera Ramírez</span></div>
@@ -388,95 +388,237 @@ footer{border-top:1px solid var(--border);padding:20px 52px;display:flex;justify
 </footer>
 
 <script>
-/* ASCII BLACK HOLE */
+/* GAME-STYLE BLACK HOLE — canvas 2D */
 (function(){
-  const el = document.getElementById('ascii-canvas');
-  if(!el) return;
+  const canvas = document.getElementById('bh-canvas');
+  const wrap   = document.getElementById('bh-wrap');
+  if(!canvas || !wrap) return;
+  const ctx = canvas.getContext('2d');
 
-  // Characters by density — sparse to dense for accretion disk glow
-  const chars = [' ','.',':','+','*','#','@'];
-  // Color layers: outer→inner
-  const colors = ['#0e3a6e','#1560a8','#1a80d4','#38b6ff','#7dd3fc','#ffffff'];
+  let W, H, cx, cy, R;
+  function resize(){
+    W = wrap.clientWidth;
+    H = wrap.clientHeight;
+    canvas.width  = W;
+    canvas.height = H;
+    cx = W * 0.5;
+    cy = H * 0.5;
+    R  = Math.min(W, H) * 0.28;
+  }
+  resize();
+  window.addEventListener('resize', resize);
 
-  const COLS = 58, ROWS = 32;
+  /* ── Particles in the accretion disk ── */
+  const NPART = 320;
+  const parts = [];
+  for(let i = 0; i < NPART; i++){
+    const band  = 0.5 + Math.random() * 0.85;          // radial band multiplier
+    const angle = Math.random() * Math.PI * 2;
+    const speed = (0.004 + Math.random() * 0.012) * (Math.random()<.5?1:-1);
+    const life  = Math.random();                        // phase offset for shimmer
+    parts.push({ band, angle, speed, life,
+                 size: 0.8 + Math.random() * 2.2,
+                 alpha: 0.3 + Math.random() * 0.7 });
+  }
+
+  /* ── Orbiting energy orbs ── */
+  const NORBS = 6;
+  const orbs = Array.from({length: NORBS}, (_, i) => ({
+    angle : (i / NORBS) * Math.PI * 2,
+    speed : 0.008 + i * 0.003,
+    r     : R * (1.55 + i * 0.12),
+    size  : 3 + Math.random() * 3,
+    hue   : 195 + i * 8,
+  }));
+
+  /* ── Ring definitions ── */
+  const rings = [
+    { r: R * 0.38, w: 1.5, a: 0.9,  speed:  0.012, col: '#7dd3fc' },
+    { r: R * 0.55, w: 1.0, a: 0.6,  speed: -0.008, col: '#38b6ff' },
+    { r: R * 0.72, w: 2.5, a: 0.45, speed:  0.006, col: '#1a8fd1' },
+    { r: R * 0.92, w: 1.5, a: 0.35, speed: -0.004, col: '#0e60a8' },
+    { r: R * 1.18, w: 1.0, a: 0.22, speed:  0.003, col: '#38b6ff' },
+    { r: R * 1.48, w: 0.8, a: 0.12, speed: -0.002, col: '#7dd3fc' },
+  ];
+  const ringAngles = rings.map(() => Math.random() * Math.PI * 2);
+
+  /* ── Hex grid pattern (static, drawn once into offscreen) ── */
+  let hexOff;
+  function buildHexOffscreen(){
+    hexOff = document.createElement('canvas');
+    hexOff.width  = W; hexOff.height = H;
+    const hx = hexOff.getContext('2d');
+    const step = 28, h3 = step * Math.sqrt(3) / 2;
+    hx.strokeStyle = '#38b6ff0a';
+    hx.lineWidth   = 0.5;
+    for(let row = -1; row < H/h3 + 2; row++){
+      for(let col = -1; col < W/step * 1.5 + 2; col++){
+        const x = col * step * 1.5;
+        const y = row * h3 * 2 + (col%2 ? h3 : 0);
+        hx.beginPath();
+        for(let s=0;s<6;s++){
+          const a = (s/6)*Math.PI*2 - Math.PI/6;
+          s===0 ? hx.moveTo(x+step*Math.cos(a), y+step*Math.sin(a))
+                : hx.lineTo(x+step*Math.cos(a), y+step*Math.sin(a));
+        }
+        hx.closePath(); hx.stroke();
+      }
+    }
+  }
+  buildHexOffscreen();
+  window.addEventListener('resize',()=>{ resize(); buildHexOffscreen(); });
+
+  /* ── Scanline overlay (subtle) ── */
+  function drawScanlines(){
+    for(let y=0; y<H; y+=4){
+      ctx.fillStyle = 'rgba(0,0,0,0.06)';
+      ctx.fillRect(0, y, W, 1);
+    }
+  }
+
+  /* ── Glow helper ── */
+  function glow(blur, color){
+    ctx.shadowBlur  = blur;
+    ctx.shadowColor = color;
+  }
+  function noGlow(){ ctx.shadowBlur = 0; }
+
   let t = 0;
 
-  // Precompute grid of colored spans
-  const grid = [];
-  for(let r = 0; r < ROWS; r++){
-    const row = [];
-    for(let c = 0; c < COLS; c++){
-      row.push({ ch:' ', color:'#0e3a6e' });
-    }
-    grid.push(row);
-  }
+  function frame(){
+    t += 0.016;
+    ctx.clearRect(0, 0, W, H);
 
-  function noise(x,y,t){
-    return Math.sin(x*0.7+t*1.1)*Math.cos(y*0.5-t*0.8)+
-           Math.sin(x*0.3-y*0.4+t*0.6)*0.5+
-           Math.cos(x*1.2+y*0.9+t*0.4)*0.3;
-  }
+    /* hex grid */
+    ctx.drawImage(hexOff, 0, 0);
 
-  function render(){
-    t += 0.045;
-    const cx = COLS/2, cy = ROWS/2;
-    const rx = COLS*0.42, ry = ROWS*0.38; // ellipse radii for the disk
-    const holeR = Math.min(COLS,ROWS)*0.12; // singularity radius
+    /* ── Outer diffuse glow halo ── */
+    const halo = ctx.createRadialGradient(cx,cy, R*1.0, cx,cy, R*2.2);
+    halo.addColorStop(0,   'rgba(56,182,255,0.07)');
+    halo.addColorStop(0.4, 'rgba(29,128,210,0.04)');
+    halo.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = halo;
+    ctx.beginPath(); ctx.arc(cx,cy,R*2.2,0,Math.PI*2); ctx.fill();
 
-    let out = '';
-    for(let r = 0; r < ROWS; r++){
-      for(let c = 0; c < COLS; c++){
-        const dx = (c - cx)/(rx), dy = (r - cy)/(ry);
-        const dist = Math.sqrt(dx*dx + dy*dy); // 0=center,1=ring edge
+    /* ── Accretion disk gradient (flat ellipse) ── */
+    const diskGrad = ctx.createRadialGradient(cx,cy,R*0.35, cx,cy,R*1.45);
+    diskGrad.addColorStop(0,    'rgba(0,0,0,0)');
+    diskGrad.addColorStop(0.38, 'rgba(56,182,255,0.18)');
+    diskGrad.addColorStop(0.55, 'rgba(125,211,252,0.28)');
+    diskGrad.addColorStop(0.72, 'rgba(56,182,255,0.15)');
+    diskGrad.addColorStop(0.9,  'rgba(14,96,168,0.06)');
+    diskGrad.addColorStop(1,    'rgba(0,0,0,0)');
+    ctx.save();
+    ctx.scale(1, 0.38);                 // flatten to look like a tilted disk
+    ctx.fillStyle = diskGrad;
+    ctx.beginPath(); ctx.arc(cx, cy/0.38, R*1.45, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
 
-        // Singularity — pure void
-        const holeDist = Math.sqrt(((c-cx)/(COLS*0.13))**2+((r-cy)/(ROWS*0.11))**2);
-        if(holeDist < 1){
-          grid[r][c] = {ch:' ', color:'#000'};
-          continue;
-        }
+    /* ── Particles ── */
+    parts.forEach(p => {
+      p.angle += p.speed;
+      p.life  += 0.008;
+      const shimmer = 0.5 + 0.5*Math.sin(p.life * 4.2);
+      const pr = R * p.band;
+      const px = cx + Math.cos(p.angle) * pr;
+      const py = cy + Math.sin(p.angle) * pr * 0.35;  // flatten Y for disk look
+      const alpha = p.alpha * shimmer;
+      glow(8, '#38b6ff');
+      ctx.fillStyle = `rgba(125,211,252,${alpha})`;
+      ctx.beginPath();
+      ctx.arc(px, py, p.size * shimmer, 0, Math.PI*2);
+      ctx.fill();
+    });
+    noGlow();
 
-        // Accretion disk zone  (dist 0.55 → 1.2)
-        const angle = Math.atan2(r-cy, c-cx);
-        const wave = noise(c*0.18, r*0.24, t) + Math.sin(angle*3 - t*2.5)*0.4;
-        const diskZone = dist > 0.55 && dist < 1.25;
-        const glowZone = dist >= 1.25 && dist < 1.8;
+    /* ── Rotating rings ── */
+    rings.forEach((ring, i) => {
+      ringAngles[i] += ring.speed;
+      const pulse = 1 + 0.04 * Math.sin(t * 3 + i);
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(ringAngles[i]);
+      ctx.scale(1, 0.35 + i * 0.03);   // different tilt per ring
+      glow(18, ring.col);
+      ctx.strokeStyle = ring.col;
+      ctx.globalAlpha = ring.a * (0.85 + 0.15*Math.sin(t*1.5+i));
+      ctx.lineWidth   = ring.w;
 
-        let intensity = 0;
-        if(diskZone){
-          // Intensity peaks near the ring edge (~dist 1.0) and falls off
-          const ringPeak = 1 - Math.abs(dist - 0.95)*2.5;
-          intensity = Math.max(0, ringPeak + wave * 0.35);
-          // Doppler asymmetry: left side brighter (blue-shifted simulation)
-          if(c < cx) intensity *= 1.2;
-        } else if(glowZone){
-          intensity = Math.max(0, (1 - (dist-1.25)/0.55)*0.55 + wave*0.15);
-        }
-
-        intensity = Math.min(1, Math.max(0, intensity));
-        const ci = Math.floor(intensity*(chars.length-1));
-        const ch = ci <= 0 ? ' ' : chars[ci];
-
-        // Color: map dist to color palette
-        const colorIdx = Math.min(colors.length-1, Math.floor((1-Math.min(1,Math.max(0,(dist-0.5)/0.8)))*(colors.length-1)));
-        const col = intensity < 0.08 ? '#0a1c30' : colors[colorIdx];
-
-        grid[r][c] = {ch, color: col};
+      /* dashed segments for game look */
+      const segs = 3 + i;
+      const gap  = (Math.PI * 2 / segs);
+      for(let s=0; s<segs; s++){
+        const start = s * gap + ringAngles[i] * 0.3;
+        ctx.beginPath();
+        ctx.arc(0, 0, ring.r * pulse, start, start + gap * 0.72);
+        ctx.stroke();
       }
-      // Build row as colored spans
-      let prev = null, seg = '';
-      for(let c = 0; c < COLS; c++){
-        const cell = grid[r][c];
-        if(prev === null){ prev = cell.color; seg = cell.ch; }
-        else if(cell.color === prev){ seg += cell.ch; }
-        else { out += `<span style="color:${prev}">${seg}</span>`; prev = cell.color; seg = cell.ch; }
-      }
-      out += `<span style="color:${prev}">${seg}</span>\n`;
+      ctx.globalAlpha = 1;
+      ctx.restore();
+      noGlow();
+    });
+
+    /* ── Singularity core ── */
+    // Void black
+    ctx.beginPath();
+    ctx.arc(cx, cy, R*0.32, 0, Math.PI*2);
+    const coreGrad = ctx.createRadialGradient(cx,cy,0, cx,cy,R*0.32);
+    coreGrad.addColorStop(0,   '#000000');
+    coreGrad.addColorStop(0.7, '#020810');
+    coreGrad.addColorStop(1,   '#061628');
+    ctx.fillStyle = coreGrad;
+    ctx.fill();
+
+    // Inner ring pulse
+    const pulseR = R*0.32 + 2*Math.sin(t*5);
+    glow(22, '#38b6ff');
+    ctx.strokeStyle = `rgba(56,182,255,${0.6+0.4*Math.sin(t*5)})`;
+    ctx.lineWidth   = 1.5;
+    ctx.beginPath(); ctx.arc(cx,cy,pulseR,0,Math.PI*2); ctx.stroke();
+    noGlow();
+
+    // Spinning inner cross/grid lines inside core
+    ctx.save();
+    ctx.translate(cx,cy);
+    ctx.rotate(t * 0.8);
+    ctx.strokeStyle = 'rgba(56,182,255,0.15)';
+    ctx.lineWidth = 0.8;
+    for(let a=0; a<4; a++){
+      const ang = (a/4)*Math.PI*2;
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.lineTo(Math.cos(ang)*R*0.3, Math.sin(ang)*R*0.3);
+      ctx.stroke();
     }
-    el.innerHTML = out;
-    requestAnimationFrame(render);
+    ctx.restore();
+
+    /* ── Orbiting energy orbs ── */
+    orbs.forEach((orb, i) => {
+      orb.angle += orb.speed;
+      const ox = cx + Math.cos(orb.angle) * orb.r;
+      const oy = cy + Math.sin(orb.angle) * orb.r * 0.32;
+      // trail
+      for(let tr=1; tr<=6; tr++){
+        const ta = orb.angle - orb.speed * tr * 3;
+        const tx = cx + Math.cos(ta) * orb.r;
+        const ty = cy + Math.sin(ta) * orb.r * 0.32;
+        ctx.globalAlpha = (1 - tr/7) * 0.35;
+        ctx.fillStyle = `hsl(${orb.hue},100%,70%)`;
+        ctx.beginPath(); ctx.arc(tx, ty, orb.size * 0.5, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      glow(16, `hsl(${orb.hue},100%,70%)`);
+      ctx.fillStyle = `hsl(${orb.hue},100%,85%)`;
+      ctx.beginPath(); ctx.arc(ox, oy, orb.size, 0, Math.PI*2); ctx.fill();
+      noGlow();
+    });
+
+    /* scanlines on top */
+    drawScanlines();
+
+    requestAnimationFrame(frame);
   }
-  render();
+  frame();
 })();
 
 /* TYPEWRITER */
